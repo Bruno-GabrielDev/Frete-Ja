@@ -1,0 +1,6 @@
+target/
+plugins-ativos/
+plugins-disponiveis/
+.idea/
+*.iml
+.vscode/
