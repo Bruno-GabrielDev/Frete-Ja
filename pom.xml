@@ -26,6 +26,7 @@
 
     <modules>
         <module>plugin-api</module>
+        <module>nucleo</module>
         <module>plugins/plugin-correios</module>
         <module>plugins/plugin-jadlog</module>
     </modules>

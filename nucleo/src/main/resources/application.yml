@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: freteja
+
+plugins:
+  diretorio: ${PLUGINS_DIR:./plugins-ativos}
+  intervalo-ms: 3000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    br.edu.ifsp.freteja: INFO
