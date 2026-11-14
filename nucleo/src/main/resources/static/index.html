@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FreteJá · Painel do núcleo</title>
+<style>
+  :root {
+    --fundo: #f3f4f1; --papel: #ffffff; --tinta: #1d2733; --suave: #67707a;
+    --linha: #d9dde0; --azul: #1f5f99; --azul-claro: #e2edf7;
+    --verde: #2f6b4f; --verde-claro: #e3efe7;
+    --ambar: #9a640c; --ambar-claro: #f8ecd4; --vermelho: #a3362b; --vermelho-claro: #f7e1dd;
+    --cinza-claro: #eceeef;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fundo); color: var(--tinta);
+         font: 15px/1.5 "Segoe UI", system-ui, sans-serif; }
+  header { padding: 22px 32px 18px; border-bottom: 1px solid var(--linha); background: var(--papel); }
+  header h1 { margin: 0; font-size: 21px; letter-spacing: -0.2px; }
+  header p { margin: 4px 0 0; color: var(--suave); font-size: 13px; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 22px 32px 40px; max-width: 1240px; }
+  section { background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 18px 20px; min-width: 0; }
+  h2 { margin: 0 0 4px; font-size: 15px; }
+  .dica { margin: 0 0 14px; color: var(--suave); font-size: 13px; }
+  .rolagem { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; color: var(--suave); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--linha); }
+  td { padding: 9px 8px; border-bottom: 1px solid #eef0f1; vertical-align: top; }
+  code { font: 12px ui-monospace, Consolas, monospace; color: var(--suave); }
+  .selo { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .CLOSED, .COTADA { background: var(--verde-claro); color: var(--verde); }
+  .OPEN, .INDISPONIVEL { background: var(--vermelho-claro); color: var(--vermelho); }
+  .HALF_OPEN { background: var(--ambar-claro); color: var(--ambar); }
+  .NAO_ATENDE { background: var(--cinza-claro); color: var(--suave); }
+  .PLUGIN { background: var(--verde-claro); color: var(--verde); }
+  .CACHE { background: var(--azul-claro); color: var(--azul); }
+  .FALHA { background: var(--vermelho-claro); color: var(--vermelho); }
+  .novo { animation: chegou 2.4s ease-out; }
+  @keyframes chegou { from { background: #fff3c4; } to { background: transparent; } }
+  form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 12px; }
+  .tres { grid-column: span 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--suave); min-width: 0; }
+  input { width: 100%; font: inherit; padding: 7px 9px; border: 1px solid var(--linha); border-radius: 6px; background: #fff; color: var(--tinta); min-width: 0; }
+  button { grid-column: span 2; font: inherit; font-weight: 600; padding: 9px; border: 0; border-radius: 6px;
+           background: var(--azul); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .rota { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; margin-bottom: 10px; }
+  .rota strong { font-size: 18px; }
+  .rota span { color: var(--suave); font-size: 13px; }
+  .valor { font-weight: 700; white-space: nowrap; }
+  .detalhe { color: var(--suave); font-size: 12.5px; margin-top: 2px; }
+  .melhor td { background: #f4f9f5; }
+  .melhor .valor::after { content: "menor preço"; margin-left: 8px; font-size: 11px; font-weight: 600; color: var(--verde); }
+  .vazio { color: var(--suave); }
+  .erro { color: var(--vermelho); font-weight: 600; }
+  .historico { margin-top: 14px; font-size: 12.5px; color: var(--suave); max-height: 130px; overflow: auto; }
+  .historico div { padding: 3px 0; border-bottom: 1px dashed #e6e8ea; }
+  .largo { grid-column: span 2; }
+  @media (max-width: 600px) {
+    .tres { grid-template-columns: minmax(0, 1fr); }
+    form { grid-template-columns: minmax(0, 1fr); }
+    .tres, button { grid-column: auto; }
+    form > span { display: none; }
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+    .largo { grid-column: auto; }
+    header { padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>FreteJá · núcleo do microkernel</h1>
+  <p>Cada transportadora é um plugin. Copie um JAR para a pasta de plugins e ela entra na comparação sem reiniciar o sistema.</p>
+</header>
+
+<main>
+  <section>
+    <h2>Transportadoras (plugins carregados)</h2>
+    <p class="dica">Atualizado a cada 2 s. Pasta observada: <code>plugins-ativos/</code></p>
+    <div class="rolagem"><table>
+      <thead><tr><th>Transportadora</th><th>Arquivo</th><th>Carregada às</th></tr></thead>
+      <tbody id="transportadoras"><tr><td colspan="3" class="vazio">carregando…</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Nova cotação</h2>
+    <p class="dica">Informe o envio e compare as transportadoras.</p>
+    <form id="form">
+      <label>CEP de origem<input id="cepOrigem" value="13560-000" required></label>
+      <label>CEP de destino<input id="cepDestino" value="01310-100" required></label>
+      <label>Peso (kg)<input id="pesoKg" type="number" step="0.1" min="0.1" value="2.5" required></label>
+      <span></span>
+      <div class="tres">
+        <label>Altura (cm)<input id="alturaCm" type="number" min="1" value="20" required></label>
+        <label>Largura (cm)<input id="larguraCm" type="number" min="1" value="30" required></label>
+        <label>Comprimento (cm)<input id="comprimentoCm" type="number" min="1" value="15" required></label>
+      </div>
+      <button id="botao" type="submit">Comparar fretes</button>
+    </form>
+  </section>
+
+  <section class="largo">
+    <h2>Comparação</h2>
+    <p class="dica">Uma consulta por transportadora, em paralelo. Origem: PLUGIN = calculado agora · FALHA = transportadora indisponível.</p>
+    <div id="resultado"><p class="vazio">Faça uma cotação.</p></div>
+    <div class="historico" id="historico"></div>
+  </section>
+</main>
+
+<script>
+const rotuloSituacao = { COTADA: "COTADA", NAO_ATENDE: "NÃO ATENDE", INDISPONIVEL: "INDISPONÍVEL" };
+const moeda = v => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const escapar = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let conhecidas = new Set();
+
+function selo(classe, texto) {
+  return `<span class="selo ${classe}">${escapar(texto)}</span>`;
+}
+
+async function atualizarTransportadoras() {
+  try {
+    const lista = await (await fetch("/api/transportadoras")).json();
+    const corpo = document.getElementById("transportadoras");
+    if (!lista.length) {
+      corpo.innerHTML = `<tr><td colspan="3" class="vazio">nenhum plugin na pasta</td></tr>`;
+    } else {
+      corpo.innerHTML = lista.map(t => {
+        const chave = t.id + "|" + t.arquivo + "|" + t.carregadoEm;
+        const nova = conhecidas.size && !conhecidas.has(chave) ? "novo" : "";
+        return `<tr class="${nova}"><td><strong>${escapar(t.nome)}</strong><br><code>${escapar(t.id)}</code></td>
+                <td><code>${escapar(t.arquivo)}</code></td>
+                <td>${new Date(t.carregadoEm).toLocaleTimeString("pt-BR")}</td></tr>`;
+      }).join("");
+    }
+    conhecidas = new Set(lista.map(t => t.id + "|" + t.arquivo + "|" + t.carregadoEm));
+  } catch (e) { }
+}
+
+function mostrarComparacao(r) {
+  const cotadas = r.cotacoes.filter(c => c.situacao === "COTADA");
+  const linhas = r.cotacoes.map((c, i) => `
+    <tr class="${i === 0 && c.situacao === "COTADA" ? "melhor" : ""}">
+      <td><strong>${escapar(c.transportadora)}</strong>${c.servico ? " · " + escapar(c.servico) : ""}
+          <div class="detalhe">${escapar(c.detalhe)}</div></td>
+      <td class="valor">${c.valor != null ? moeda(c.valor) : "—"}</td>
+      <td>${c.prazoDias != null ? c.prazoDias + (c.prazoDias === 1 ? " dia útil" : " dias úteis") : "—"}</td>
+      <td>${selo(c.situacao, rotuloSituacao[c.situacao] || c.situacao)}</td>
+      <td>${selo(c.origem, c.origem)}</td>
+    </tr>`).join("");
+  document.getElementById("resultado").innerHTML = `
+    <div class="rota"><strong>${escapar(r.ufOrigem)} → ${escapar(r.ufDestino)}</strong>
+      <span>${escapar(r.distancia)}</span><span>${r.tempoMs} ms</span>
+      <span>${cotadas.length} de ${r.cotacoes.length} transportadoras cotaram</span></div>
+    ${r.cotacoes.length ? `<div class="rolagem"><table>
+      <thead><tr><th>Transportadora</th><th>Valor</th><th>Prazo</th><th>Situação</th><th>Origem</th></tr></thead>
+      <tbody>${linhas}</tbody></table></div>` : `<p class="vazio">Nenhuma transportadora carregada.</p>`}`;
+  const resumo = r.cotacoes.map(c => `${c.transportadoraId}:${c.origem}`).join(" ");
+  const linha = document.createElement("div");
+  linha.textContent = `${new Date().toLocaleTimeString("pt-BR")} · ${r.ufOrigem}→${r.ufDestino} · ${r.tempoMs} ms · ${resumo}`;
+  document.getElementById("historico").prepend(linha);
+}
+
+document.getElementById("form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const botao = document.getElementById("botao");
+  botao.disabled = true; botao.textContent = "Consultando transportadoras…";
+  const valor = id => document.getElementById(id).value;
+  const pedido = {
+    cepOrigem: valor("cepOrigem"), cepDestino: valor("cepDestino"), pesoKg: Number(valor("pesoKg")),
+    alturaCm: Number(valor("alturaCm")), larguraCm: Number(valor("larguraCm")), comprimentoCm: Number(valor("comprimentoCm"))
+  };
+  try {
+    const resp = await fetch("/api/cotacoes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pedido) });
+    const dados = await resp.json();
+    if (!resp.ok) {
+      document.getElementById("resultado").innerHTML = `<p class="erro">${escapar(dados.erro)}</p>`;
+      return;
+    }
+    mostrarComparacao(dados);
+  } catch (e) {
+    document.getElementById("resultado").innerHTML = `<p class="erro">Núcleo fora do ar.</p>`;
+  } finally {
+    botao.disabled = false; botao.textContent = "Comparar fretes";
+    atualizarTransportadoras();
+  }
+});
+
+atualizarTransportadoras();
+setInterval(atualizarTransportadoras, 2000);
+</script>
+</body>
+</html>
