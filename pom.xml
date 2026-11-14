@@ -30,5 +30,7 @@
         <module>plugins/plugin-correios</module>
         <module>plugins/plugin-jadlog</module>
         <module>plugins/plugin-loggi</module>
+        <module>plugins/plugin-expressa</module>
+        <module>plugins/plugin-expressa-instavel</module>
     </modules>
 </project>
