@@ -29,5 +29,6 @@
         <module>nucleo</module>
         <module>plugins/plugin-correios</module>
         <module>plugins/plugin-jadlog</module>
+        <module>plugins/plugin-loggi</module>
     </modules>
 </project>
