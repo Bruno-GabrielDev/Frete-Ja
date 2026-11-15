@@ -5,6 +5,7 @@ import br.edu.ifsp.freteja.api.Envio;
 import br.edu.ifsp.freteja.nucleo.execucao.ExecutorIsolado;
 import br.edu.ifsp.freteja.nucleo.execucao.PluginIndisponivelException;
 import br.edu.ifsp.freteja.nucleo.plugin.PluginCarregado;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,6 +17,9 @@ public class CotadorDeTransportadora {
         this.executor = executor;
     }
 
+    @Cacheable(cacheNames = "cotacoes",
+            key = "#plugin.id() + ':' + #envio.chave()",
+            unless = "#result.indisponivel()")
     public CotacaoDeFrete cotar(PluginCarregado plugin, Envio envio) {
         try {
             return executor.cotar(plugin, envio);

@@ -1,5 +1,6 @@
 package br.edu.ifsp.freteja.nucleo.config;
 
+import br.edu.ifsp.freteja.nucleo.cotacao.InvalidadorDeCache;
 import br.edu.ifsp.freteja.nucleo.execucao.ExecutorIsolado;
 import br.edu.ifsp.freteja.nucleo.plugin.CarregadorDePlugins;
 import br.edu.ifsp.freteja.nucleo.plugin.RegistroDePlugins;
@@ -7,6 +8,7 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.SlidingWindowType;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -48,11 +50,17 @@ public class ConfiguracaoDoNucleo {
         return new ExecutorIsolado(circuitos, Duration.ofMillis(tempoLimiteMs));
     }
 
+    @Bean
+    public InvalidadorDeCache invalidadorDeCache(CacheManager cacheManager) {
+        return new InvalidadorDeCache(cacheManager);
+    }
+
     @Bean(destroyMethod = "close")
     public CarregadorDePlugins carregadorDePlugins(
             @Value("${plugins.diretorio:./plugins-ativos}") String diretorio,
             RegistroDePlugins registro,
-            ExecutorIsolado executor) {
-        return new CarregadorDePlugins(Path.of(diretorio), registro, List.of(executor));
+            ExecutorIsolado executor,
+            InvalidadorDeCache invalidador) {
+        return new CarregadorDePlugins(Path.of(diretorio), registro, List.of(executor, invalidador));
     }
 }

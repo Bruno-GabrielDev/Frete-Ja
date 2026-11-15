@@ -29,7 +29,14 @@ public final class Pedidos {
                                    String detalhe, String origem) {
 
         static ItemDaComparacao de(CotacaoDeFrete c, Instant inicio) {
-            String origem = c.indisponivel() ? "FALHA" : "PLUGIN";
+            String origem;
+            if (c.indisponivel()) {
+                origem = "FALHA";
+            } else if (c.calculadaEm().isBefore(inicio)) {
+                origem = "CACHE";
+            } else {
+                origem = "PLUGIN";
+            }
             return new ItemDaComparacao(c.transportadoraId(), c.transportadora(), c.servico(),
                     c.situacao(), c.valor(), c.prazoDias(), c.detalhe(), origem);
         }

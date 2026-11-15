@@ -1,6 +1,16 @@
 spring:
   application:
     name: freteja
+  cache:
+    type: redis
+    cache-names: cotacoes
+    redis:
+      time-to-live: 5m
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 1s
 
 plugins:
   diretorio: ${PLUGINS_DIR:./plugins-ativos}
@@ -17,7 +27,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,caches
   endpoint:
     health:
       show-details: always
