@@ -1,0 +1,28 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+SHOW_PERSON_OUTLINE()
+title FreteJá — Diagrama de Containers (C4 nível 2)
+
+Person(loja, "Operador da loja", "Compara o frete de um envio e escolhe a transportadora")
+Person(dev, "Desenvolvedor de plugin", "Escreve as regras de uma transportadora e entrega um JAR")
+System_Ext(lojaVirtual, "Loja virtual", "Checkout que precisa do frete para fechar o pedido")
+System_Ext(apis, "APIs das transportadoras", "Correios, Jadlog, Loggi, Expressa... (simuladas nos plugins)")
+
+System_Boundary(freteja, "FreteJá") {
+    Container(painel, "Painel web", "Container: HTML e JavaScript", "Mostra as transportadoras carregadas, a comparação e o estado dos circuitos")
+    Container(nucleo, "Núcleo", "Container: Java 21, Spring Boot", "Fluxo comum de comparação; descobre, protege e executa os plugins")
+    Container(pasta, "Pasta de plugins", "Container: sistema de arquivos", "Um JAR por transportadora, verificada pelo núcleo a cada 3 s")
+    ContainerDb(redis, "Cache", "Container: Redis 7", "Cotações por transportadora + envio, com validade de 5 min")
+}
+
+Rel(loja, painel, "Usa", "HTTPS")
+Rel_Neighbor(painel, nucleo, "Chama a API", "JSON/HTTPS")
+Rel(lojaVirtual, nucleo, "POST /api/cotacoes", "JSON/HTTPS")
+Rel(dev, pasta, "Copia ou remove JAR")
+Rel(nucleo, pasta, "Carrega JARs em execução", "URLClassLoader + ServiceLoader")
+Rel(nucleo, redis, "Lê e grava cotações", "RESP")
+Rel(nucleo, apis, "Consulta por meio dos plugins", "HTTPS")
+
+SHOW_LEGEND()
+@enduml

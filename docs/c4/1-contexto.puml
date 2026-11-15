@@ -1,0 +1,21 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+SHOW_PERSON_OUTLINE()
+title FreteJá — Diagrama de Contexto (C4 nível 1)
+
+Person(loja, "Operador da loja", "Compara o frete de um envio e escolhe a transportadora")
+Person(dev, "Desenvolvedor de plugin", "Escreve as regras de uma transportadora e entrega um JAR")
+System_Ext(lojaVirtual, "Loja virtual", "Checkout que precisa do frete para fechar o pedido")
+
+System(freteja, "FreteJá", "Compara o frete de um envio em várias transportadoras e devolve as cotações ordenadas")
+
+System_Ext(apis, "APIs das transportadoras", "Correios, Jadlog, Loggi, Expressa... (simuladas nos plugins)")
+
+Rel(loja, freteja, "Compara fretes pelo painel", "HTTPS")
+Rel(lojaVirtual, freteja, "Pede a comparação no checkout", "JSON/HTTPS")
+Rel(dev, freteja, "Instala, troca ou remove transportadora", "JAR na pasta de plugins")
+Rel(freteja, apis, "Consulta preço e prazo", "HTTPS")
+
+SHOW_LEGEND()
+@enduml
