@@ -2,6 +2,8 @@ package br.edu.ifsp.freteja.nucleo.web;
 
 import br.edu.ifsp.freteja.api.Envio;
 import br.edu.ifsp.freteja.nucleo.cotacao.ComparadorDeFrete;
+import br.edu.ifsp.freteja.nucleo.execucao.EstadoDoCircuito;
+import br.edu.ifsp.freteja.nucleo.execucao.ExecutorIsolado;
 import br.edu.ifsp.freteja.nucleo.plugin.RegistroDePlugins;
 import br.edu.ifsp.freteja.nucleo.web.Pedidos.ItemDaComparacao;
 import br.edu.ifsp.freteja.nucleo.web.Pedidos.PedidoDeCotacao;
@@ -22,16 +24,18 @@ public class FreteController {
 
     private final ComparadorDeFrete comparador;
     private final RegistroDePlugins registro;
+    private final ExecutorIsolado executor;
 
-    public FreteController(ComparadorDeFrete comparador, RegistroDePlugins registro) {
+    public FreteController(ComparadorDeFrete comparador, RegistroDePlugins registro, ExecutorIsolado executor) {
         this.comparador = comparador;
         this.registro = registro;
+        this.executor = executor;
     }
 
     @GetMapping("/transportadoras")
     public List<TransportadoraAtiva> transportadoras() {
         return registro.listar().stream()
-                .map(p -> new TransportadoraAtiva(p.id(), p.nome(), p.arquivo(), p.carregadoEm()))
+                .map(p -> new TransportadoraAtiva(p.id(), p.nome(), p.arquivo(), p.carregadoEm(), executor.estadoDe(p.id())))
                 .toList();
     }
 
@@ -45,5 +49,10 @@ public class FreteController {
                 .toList();
         long tempoMs = (System.nanoTime() - t0) / 1_000_000;
         return new RespostaDaComparacao(envio.ufOrigem(), envio.ufDestino(), envio.distancia().descricao(), itens, tempoMs);
+    }
+
+    @GetMapping("/circuitos")
+    public List<EstadoDoCircuito> circuitos() {
+        return executor.estados();
     }
 }

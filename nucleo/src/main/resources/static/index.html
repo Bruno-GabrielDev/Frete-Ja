@@ -80,8 +80,8 @@
     <h2>Transportadoras (plugins carregados)</h2>
     <p class="dica">Atualizado a cada 2 s. Pasta observada: <code>plugins-ativos/</code></p>
     <div class="rolagem"><table>
-      <thead><tr><th>Transportadora</th><th>Arquivo</th><th>Carregada às</th></tr></thead>
-      <tbody id="transportadoras"><tr><td colspan="3" class="vazio">carregando…</td></tr></tbody>
+      <thead><tr><th>Transportadora</th><th>Arquivo</th><th>Carregada às</th><th>Circuito</th></tr></thead>
+      <tbody id="transportadoras"><tr><td colspan="4" class="vazio">carregando…</td></tr></tbody>
     </table></div>
   </section>
 
@@ -108,9 +108,19 @@
     <div id="resultado"><p class="vazio">Faça uma cotação.</p></div>
     <div class="historico" id="historico"></div>
   </section>
+
+  <section class="largo">
+    <h2>Circuit breakers</h2>
+    <p class="dica">Um por transportadora, criado na primeira consulta. ABERTO = o núcleo parou de consultar aquela transportadora e responde "indisponível" na hora.</p>
+    <div class="rolagem"><table>
+      <thead><tr><th>Transportadora</th><th>Estado</th><th>Falhas</th><th>Sucessos</th><th>Recusadas (circuito aberto)</th><th>Taxa de falha</th></tr></thead>
+      <tbody id="circuitos"><tr><td colspan="6" class="vazio">nenhuma consulta ainda</td></tr></tbody>
+    </table></div>
+  </section>
 </main>
 
 <script>
+const rotuloCircuito = { CLOSED: "FECHADO", OPEN: "ABERTO", HALF_OPEN: "MEIO-ABERTO" };
 const rotuloSituacao = { COTADA: "COTADA", NAO_ATENDE: "NÃO ATENDE", INDISPONIVEL: "INDISPONÍVEL" };
 const moeda = v => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const escapar = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -125,17 +135,29 @@ async function atualizarTransportadoras() {
     const lista = await (await fetch("/api/transportadoras")).json();
     const corpo = document.getElementById("transportadoras");
     if (!lista.length) {
-      corpo.innerHTML = `<tr><td colspan="3" class="vazio">nenhum plugin na pasta</td></tr>`;
+      corpo.innerHTML = `<tr><td colspan="4" class="vazio">nenhum plugin na pasta</td></tr>`;
     } else {
       corpo.innerHTML = lista.map(t => {
         const chave = t.id + "|" + t.arquivo + "|" + t.carregadoEm;
         const nova = conhecidas.size && !conhecidas.has(chave) ? "novo" : "";
         return `<tr class="${nova}"><td><strong>${escapar(t.nome)}</strong><br><code>${escapar(t.id)}</code></td>
                 <td><code>${escapar(t.arquivo)}</code></td>
-                <td>${new Date(t.carregadoEm).toLocaleTimeString("pt-BR")}</td></tr>`;
+                <td>${new Date(t.carregadoEm).toLocaleTimeString("pt-BR")}</td>
+                <td>${selo(t.circuito, rotuloCircuito[t.circuito] || t.circuito)}</td></tr>`;
       }).join("");
     }
     conhecidas = new Set(lista.map(t => t.id + "|" + t.arquivo + "|" + t.carregadoEm));
+  } catch (e) { }
+}
+
+async function atualizarCircuitos() {
+  try {
+    const lista = await (await fetch("/api/circuitos")).json();
+    if (!lista.length) return;
+    document.getElementById("circuitos").innerHTML = lista.map(c => `
+      <tr><td><code>${escapar(c.plugin)}</code></td><td>${selo(c.estado, rotuloCircuito[c.estado] || c.estado)}</td>
+      <td>${c.chamadasComFalha}</td><td>${c.chamadasComSucesso}</td><td>${c.chamadasRecusadas}</td>
+      <td>${c.taxaDeFalha < 0 ? "—" : c.taxaDeFalha.toFixed(0) + "%"}</td></tr>`).join("");
   } catch (e) { }
 }
 
@@ -184,12 +206,12 @@ document.getElementById("form").addEventListener("submit", async ev => {
     document.getElementById("resultado").innerHTML = `<p class="erro">Núcleo fora do ar.</p>`;
   } finally {
     botao.disabled = false; botao.textContent = "Comparar fretes";
-    atualizarTransportadoras();
+    atualizarCircuitos(); atualizarTransportadoras();
   }
 });
 
-atualizarTransportadoras();
-setInterval(atualizarTransportadoras, 2000);
+atualizarTransportadoras(); atualizarCircuitos();
+setInterval(() => { atualizarTransportadoras(); atualizarCircuitos(); }, 2000);
 </script>
 </body>
 </html>

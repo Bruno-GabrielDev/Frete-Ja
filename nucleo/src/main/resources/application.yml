@@ -7,6 +7,12 @@ plugins:
   intervalo-ms: 3000
   tempo-limite-ms: 2000
 
+circuito:
+  janela-de-chamadas: 4
+  minimo-de-chamadas: 3
+  taxa-de-falha-percentual: 50
+  tempo-aberto-segundos: 20
+
 management:
   endpoints:
     web:
