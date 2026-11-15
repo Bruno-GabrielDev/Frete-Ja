@@ -148,6 +148,31 @@ Pela linha de comando, sem o painel: `./scripts/cotar.sh 13560-000 01310-100 2.5
 
 ---
 
+## Medindo os impactos da arquitetura
+
+Com o núcleo no ar, na raiz do projeto:
+
+```bash
+python3 scripts/medir_impactos.py
+```
+
+O script mede, na API real, três coisas: a mesma cotação repetida 10 vezes (tempo e consultas às
+transportadoras, efeito do cache), oito comparações com a Expressa instável (tempo de cada uma até o
+circuito abrir) e quanto tempo um plugin novo leva para entrar sem reiniciar o núcleo. Só usa a
+biblioteca padrão do Python 3.
+
+Resultados obtidos com os plugins reais e o Resilience4j real (o cache foi medido sem Redis):
+
+| Tática | Sem ela | Com ela |
+|---|---|---|
+| Consulta em paralelo (4 transportadoras) | 1.804 ms | 601 ms |
+| Cache (10 cotações iguais) | 601 ms cada, 40 consultas às APIs | 1ª 601 ms, demais < 1 ms, 4 consultas |
+| Circuit breaker (8 comparações com uma transportadora fora do ar) | 16.016 ms (só tempo limite); 40.003 ms sem proteção nenhuma | 9.019 ms; depois de abrir, 601 ms por comparação |
+| Plugin novo (Microkernel) | recompilar e reiniciar o sistema | disponível em ~3 s, núcleo intacto |
+| Custo do executor isolado | 0,25 µs por chamada direta | 5 µs por chamada protegida |
+
+---
+
 ## API
 
 | Método | Rota | Descrição |
