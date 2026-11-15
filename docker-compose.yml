@@ -1,0 +1,14 @@
+services:
+  redis:
+    image: redis:7-alpine
+
+  nucleo:
+    build: ./nucleo
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./plugins-ativos:/app/plugins
