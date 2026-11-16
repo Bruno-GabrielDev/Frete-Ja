@@ -8,7 +8,43 @@ services:
       - redis
     environment:
       REDIS_HOST: redis
+      INSTANCIA: "completa"
     ports:
       - "8080:8080"
     volumes:
       - ./plugins-ativos:/app/plugins
+
+  nucleo-sem-cache:
+    build: ./nucleo
+    profiles: ["comparacao"]
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      SPRING_CACHE_TYPE: none
+      INSTANCIA: "sem cache"
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./plugins-ativos:/app/plugins
+
+  nucleo-sem-cb:
+    build: ./nucleo
+    profiles: ["comparacao"]
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      CIRCUITO_JANELA_DE_CHAMADAS: "10000"
+      CIRCUITO_MINIMO_DE_CHAMADAS: "10000"
+      INSTANCIA: "sem circuit breaker"
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./plugins-ativos:/app/plugins
+
+  k6:
+    image: grafana/k6:0.54.0
+    profiles: ["carga"]
+    volumes:
+      - ./carga:/carga

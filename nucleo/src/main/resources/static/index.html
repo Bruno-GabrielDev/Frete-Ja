@@ -56,7 +56,19 @@
   .historico { margin-top: 14px; font-size: 12.5px; color: var(--suave); max-height: 130px; overflow: auto; }
   .historico div { padding: 3px 0; border-bottom: 1px dashed #e6e8ea; }
   .largo { grid-column: span 2; }
+  .instancia { margin-left: 10px; vertical-align: middle; background: var(--azul-claro); color: var(--azul); }
+  .numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .numero { border: 1px solid var(--linha); border-radius: 8px; padding: 10px 12px; }
+  .numero span { display: block; font-size: 12.5px; color: var(--suave); }
+  .numero strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+  .serie { margin-top: 10px; }
+  .serie-titulo { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--suave); margin-bottom: 4px; }
+  .barras { display: flex; align-items: flex-end; gap: 2px; height: 70px; border-bottom: 1px solid var(--linha); }
+  .barras div { flex: 1; min-height: 1px; border-radius: 2px 2px 0 0; }
+  .barras.req div { background: var(--azul); }
+  .barras.cons div { background: var(--ambar); }
   @media (max-width: 600px) {
+    .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .tres { grid-template-columns: minmax(0, 1fr); }
     form { grid-template-columns: minmax(0, 1fr); }
     .tres, button { grid-column: auto; }
@@ -71,7 +83,7 @@
 </head>
 <body>
 <header>
-  <h1>FreteJá · núcleo do microkernel</h1>
+  <h1>FreteJá · núcleo do microkernel <span class="selo instancia" id="instancia">instância</span></h1>
   <p>Cada transportadora é um plugin. Copie um JAR para a pasta de plugins e ela entra na comparação sem reiniciar o sistema.</p>
 </header>
 
@@ -107,6 +119,19 @@
     <p class="dica">Uma consulta por transportadora, em paralelo. Origem: PLUGIN = calculado agora · CACHE = já calculado · FALHA = transportadora indisponível.</p>
     <div id="resultado"><p class="vazio">Faça uma cotação.</p></div>
     <div class="historico" id="historico"></div>
+  </section>
+
+  <section class="largo">
+    <h2>Tráfego</h2>
+    <p class="dica">Atualizado a cada segundo. Os números são a média dos últimos 5 s; as barras mostram os últimos 30 s.</p>
+    <div class="numeros">
+      <div class="numero"><span>Comparações por segundo</span><strong id="t-req">—</strong></div>
+      <div class="numero"><span>Tempo médio por comparação</span><strong id="t-tempo">—</strong></div>
+      <div class="numero"><span>Respostas vindas do cache</span><strong id="t-cache">—</strong></div>
+      <div class="numero"><span>Consultas às transportadoras por segundo</span><strong id="t-cons">—</strong></div>
+    </div>
+    <div class="serie"><div class="serie-titulo"><span>Comparações por segundo</span><span id="t-req-max"></span></div><div class="barras req" id="b-req"></div></div>
+    <div class="serie"><div class="serie-titulo"><span>Consultas às transportadoras por segundo</span><span id="t-cons-max"></span></div><div class="barras cons" id="b-cons"></div></div>
   </section>
 
   <section class="largo">
@@ -210,8 +235,40 @@ document.getElementById("form").addEventListener("submit", async ev => {
   }
 });
 
-atualizarTransportadoras(); atualizarCircuitos();
+const formato = n => n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+
+function desenharBarras(id, valores) {
+  const maximo = Math.max(...valores, 1);
+  document.getElementById(id).innerHTML = valores
+    .map(v => `<div style="height:${(v / maximo) * 100}%" title="${formato(v)}"></div>`).join("");
+  return Math.max(...valores);
+}
+
+async function atualizarTrafego() {
+  try {
+    const t = await (await fetch("/api/trafego?segundos=30")).json();
+    document.getElementById("instancia").textContent = "instância: " + t.instancia;
+    const ultimos = t.pontos.slice(-5);
+    const soma = campo => ultimos.reduce((total, p) => total + p[campo], 0);
+    const req = soma("requisicoes");
+    const respostas = soma("respostasDoCache") + soma("consultasAsTransportadoras") + soma("falhas");
+    const tempoTotal = ultimos.reduce((total, p) => total + p.tempoMedioMs * p.requisicoes, 0);
+    document.getElementById("t-req").textContent = formato(req / ultimos.length);
+    const tempoMedio = req ? tempoTotal / req : null;
+    document.getElementById("t-tempo").textContent =
+        tempoMedio === null ? "—" : tempoMedio < 1 ? "< 1 ms" : formato(tempoMedio) + " ms";
+    document.getElementById("t-cache").textContent = respostas ? formato(100 * soma("respostasDoCache") / respostas) + "%" : "—";
+    document.getElementById("t-cons").textContent = formato(soma("consultasAsTransportadoras") / ultimos.length);
+    const maxReq = desenharBarras("b-req", t.pontos.map(p => p.requisicoes));
+    const maxCons = desenharBarras("b-cons", t.pontos.map(p => p.consultasAsTransportadoras));
+    document.getElementById("t-req-max").textContent = "pico: " + formato(maxReq) + "/s";
+    document.getElementById("t-cons-max").textContent = "pico: " + formato(maxCons) + "/s";
+  } catch (e) { }
+}
+
+atualizarTransportadoras(); atualizarCircuitos(); atualizarTrafego();
 setInterval(() => { atualizarTransportadoras(); atualizarCircuitos(); }, 2000);
+setInterval(atualizarTrafego, 1000);
 </script>
 </body>
 </html>

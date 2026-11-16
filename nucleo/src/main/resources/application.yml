@@ -23,6 +23,9 @@ circuito:
   taxa-de-falha-percentual: 50
   tempo-aberto-segundos: 20
 
+freteja:
+  instancia: ${INSTANCIA:completa}
+
 management:
   endpoints:
     web:

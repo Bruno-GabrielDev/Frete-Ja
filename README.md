@@ -173,6 +173,78 @@ Resultados obtidos com os plugins reais e o Resilience4j real (o cache foi medid
 
 ---
 
+## Demonstração com carga (k6): o sistema com e sem cada tática
+
+A ideia é mostrar o tráfego ao vivo: a mesma carga contra o sistema completo e contra cópias dele
+com uma tática desligada. As três instâncias rodam o **mesmo código e a mesma pasta de plugins**;
+só muda a configuração.
+
+| Instância | Porta | O que muda |
+|---|---|---|
+| `nucleo` (completa) | 8080 | cache + circuit breaker (a arquitetura proposta) |
+| `nucleo-sem-cache` | 8081 | `SPRING_CACHE_TYPE=none`: o Spring usa um cache que não guarda nada |
+| `nucleo-sem-cb` | 8082 | circuito só abriria depois de 10.000 chamadas (nunca, na demo); o tempo limite de 2 s continua |
+
+Cada painel tem a seção **Tráfego**: comparações por segundo, tempo médio, % vinda do cache e
+consultas às transportadoras por segundo, com barras dos últimos 30 s (`GET /api/trafego`).
+
+### Passo a passo
+
+```bash
+./scripts/build.sh
+./scripts/instalar.sh loggi                      # Correios, Jadlog e Loggi ativas
+docker compose --profile comparacao up --build   # sobe as três instâncias + Redis
+```
+
+Abra **http://localhost:8081** (sem cache) e **http://localhost:8080** (completa) lado a lado.
+
+**1. Impacto do cache.** Em outro terminal:
+```bash
+./scripts/carga.sh sem-cache     # 20 usuários por 30 s
+./scripts/carga.sh completa
+```
+No painel sem cache, cada comparação leva ~600 ms e as consultas às transportadoras sobem junto com
+as comparações (3 por comparação). No completo, as consultas aparecem só no primeiro segundo e depois
+ficam em zero; o resto vem do cache.
+
+**2. Impacto do circuit breaker.** Instale a transportadora que não responde e abra a porta 8082:
+```bash
+./scripts/instalar.sh expressa-instavel
+./scripts/carga.sh sem-cb
+./scripts/carga.sh completa
+```
+Sem circuit breaker, toda comparação espera os 2 s do tempo limite. Com ele, o circuito abre depois
+de 3 falhas e as comparações voltam a levar poucos ms, com a Expressa como **INDISPONÍVEL**.
+Para encerrar: `./scripts/remover.sh expressa-instavel`.
+
+`./scripts/carga.sh <instancia> [usuarios] [duracao]` usa o k6 do Docker (imagem `grafana/k6:0.54.0`);
+com o k6 instalado na máquina: `k6 run -e ALVO=http://localhost:8081 -e NOME="sem cache" carga/cotacoes.js`.
+
+### Resultados medidos
+
+k6 0.54.0, 20 usuários simultâneos, 30 s, cinco pacotes que se repetem, Correios + Jadlog + Loggi.
+
+| Experimento | Comparações/s | Tempo médio | p95 | Consultas às transportadoras |
+|---|---|---|---|---|
+| Sem cache | 32,9 | 607 ms | 632 ms | 3.000 (100% das linhas) |
+| Completa | 6.363,5 | 2,9 ms | 9,3 ms | 60 (só no início) |
+| Expressa fora do ar, sem circuit breaker | 9,9 | 2.017 ms | 2.129 ms | — |
+| Expressa fora do ar, completa | 6.059 | 3,0 ms | 8,1 ms | — |
+
+> **Como foi medido:** a carga do k6 é real e o núcleo é o mesmo código (plugins, executor isolado,
+> Resilience4j, comparador, monitor de tráfego), mas servido por um servidor HTTP mínimo e com cache em
+> memória, sem Spring nem Redis. No Docker os números absolutos mudam (o Redis acrescenta uma ida pela
+> rede em cada acerto de cache); a diferença entre as instâncias é o que importa.
+
+As 60 consultas da instância completa são o *cache stampede*: os 20 usuários pedem o mesmo pacote
+antes de a primeira resposta entrar no cache (20 × 3 transportadoras). Depois disso, nenhuma.
+
+Por que k6 e não JMeter: o teste é um arquivo de texto versionado no repositório (`carga/cotacoes.js`),
+roda pelo Docker sem instalar nada e imprime o resumo já em português. O mesmo cenário pode ser montado
+no JMeter (Thread Group com 20 threads, HTTP Request `POST /api/cotacoes`).
+
+---
+
 ## API
 
 | Método | Rota | Descrição |
@@ -180,6 +252,7 @@ Resultados obtidos com os plugins reais e o Resilience4j real (o cache foi medid
 | `GET` | `/api/transportadoras` | transportadoras disponíveis = plugins carregados, com estado do circuito |
 | `POST` | `/api/cotacoes` | `{"cepOrigem","cepDestino","pesoKg","alturaCm","larguraCm","comprimentoCm"}` → UFs, distância, cotações ordenadas e `tempoMs` |
 | `GET` | `/api/circuitos` | estado, falhas, sucessos e chamadas recusadas de cada circuit breaker |
+| `GET` | `/api/trafego?segundos=30` | por segundo: comparações, consultas às transportadoras, respostas do cache, falhas e tempo médio |
 | `GET` | `/actuator/health` | saúde do núcleo e do Redis |
 
 Cada cotação traz `situacao` (`COTADA`, `NAO_ATENDE`, `INDISPONIVEL`) e `origem` (`PLUGIN`, `CACHE`, `FALHA`).
@@ -220,10 +293,12 @@ mvn test
 - `ComparadorDeFreteTest` — ordenação, consulta em paralelo, transportadora travada vira indisponível,
   circuito abre e para de consultar, as outras continuam cotando, recarregar o plugin zera o circuito.
 - `EnvioTest` — CEP, distância, peso cúbico e chave de cache.
+- `MonitorDeTrafegoTest` — contagem por segundo e classificação por origem (plugin, cache, falha).
 
 ---
 
 ## Documentação
 
 - `docs/adr/` — os três ADRs (microkernel, circuit breaking, caching)
-- `docs/c4/` — modelo C4 (contexto, containers e componentes) em PlantUML, com as imagens já geradas
+- `docs/c4/` — modelo C4 (contexto, containers, componentes e a sequência de uma cotação) em PlantUML, com as imagens já geradas
+- `carga/cotacoes.js` — teste de carga do k6 usado na demonstração
