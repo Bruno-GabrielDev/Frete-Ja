@@ -60,4 +60,4 @@ Testes ArchUnit em `ArquiteturaTest`:
 
 ## Notas
 
-Autores: Bruno G. A. Silva, Sabrina, Felipe.
+Autor: Sabrina .
