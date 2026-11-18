@@ -1,6 +1,6 @@
 # ADR-001 — Microkernel com descoberta dinâmica de plugins
 
-**Status:** Aceito · **Data:** 02/11/2026 (decisão da proposta aprovada nesse dia) · **Revisado em:** 18/11/2026 (limites do isolamento, modelo de confiança e descoberta por verificação periódica)
+**Situação:** Aceita
 
 ## Contexto
 
@@ -94,4 +94,7 @@ são o complemento.
 
 ## Notas
 
-Autor: Sabrina .
+- **Autor:** Sabrina
+- **Data de aprovação:** 02/11/2026, com o aceite da proposta do projeto pelo professor
+- **Última modificação:** 18/11/2026 — limites do isolamento, modelo de confiança e descoberta por verificação periódica
+- **ADRs relacionadas:** ADR-002 (circuit breaker) e ADR-003 (cache) completam esta decisão.

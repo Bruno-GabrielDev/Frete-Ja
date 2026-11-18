@@ -2,7 +2,7 @@
 
 Trabalho prático de Arquitetura de Software (IFSP São Carlos — Prof. Dr. Lucas Oliveira).
 
-**Equipe:** Bruno G. A. Silva, Sabrina, Felipe
+**Equipe:** Bruno G. A. Silva, Sabrina, Filipe
 
 Comparador de frete para lojas virtuais: a loja informa CEP de origem, CEP de destino, peso e
 dimensões do pacote, e o sistema devolve as cotações de várias transportadoras (valor e prazo),
@@ -314,7 +314,7 @@ stampede, Metaspace sem monitoramento e o painel, que é didático e não substi
 
 ## Documentação
 
-- `docs/adr/` — os três ADRs (microkernel, circuit breaking, caching)
+- `docs/adr/` — os três ADRs, um por integrante: ADR-001 microkernel (Sabrina), ADR-002 circuit breaking (Filipe) e ADR-003 caching (Bruno)
 - `docs/LIMITACOES.md` — limitações conhecidas, com o que existe hoje e o próximo passo
 - `docs/c4/` — modelo C4 (contexto, containers, componentes e a sequência de uma cotação) em PlantUML, com as imagens já geradas
 - `carga/cotacoes.js` — teste de carga do k6 usado na demonstração

@@ -1,8 +1,11 @@
 # ADR-002 — Circuit breaker por transportadora
 
-**Status:** Aceito · **Data:** 02/11/2026 · **Revisado em:** 18/11/2026 (o tempo limite é da resposta; plugins em threads de plataforma)
+**Situação:** Aceita
 
 ## Contexto
+
+Este ADR completa a escolha do estilo (ADR-001): o Microkernel tem baixa tolerância a falhas, porque
+os plugins rodam no mesmo processo do núcleo, e este elemento adicional cobre essa fraqueza.
 
 Cada transportadora calcula o frete consultando um serviço externo, que pode ficar lento ou fora do
 ar. Pelo ADR-001, o código de cada transportadora roda dentro do processo do núcleo, e a comparação
@@ -62,4 +65,7 @@ Ao carregar uma nova versão do plugin, o circuito daquela transportadora é zer
 
 ## Notas
 
-Depende do ADR-001. Autor: Filipe.
+- **Autor:** Filipe
+- **Data de aprovação:** 02/11/2026, com o aceite da proposta do projeto pelo professor
+- **Última modificação:** 18/11/2026 — o tempo limite passou a ser descrito como tempo limite de resposta, e o código dos plugins passou a rodar em threads de plataforma
+- **ADRs relacionadas:** Depende do ADR-001.

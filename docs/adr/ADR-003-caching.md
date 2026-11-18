@@ -1,9 +1,12 @@
 # ADR-003 — Cache de cotações em Redis, com chave versionada pelo plugin
 
-**Status:** Aceito · **Data:** 02/11/2026 · **Revisado em:** 18/11/2026 (a chave passou a levar a
-versão do JAR, no lugar da limpeza do cache a cada troca de plugin)
+**Situação:** Aceita
 
 ## Contexto
+
+Este ADR completa a escolha do estilo (ADR-001): no Microkernel o núcleo consulta cada plugin, e cada
+consulta depende de um serviço externo lento. Este elemento adicional reduz esse custo, sem que o
+núcleo precise conhecer as regras de nenhuma transportadora.
 
 Cada cotação depende de uma consulta à transportadora (simulada com 300 a 600 ms). O padrão de uso é
 repetitivo: no checkout de uma loja, o mesmo envio (mesma origem, destino e pacote) é cotado várias
@@ -89,4 +92,7 @@ chaves.
 
 ## Notas
 
-Autor: Bruno .
+- **Autor:** Bruno G. A. Silva
+- **Data de aprovação:** 02/11/2026, com o aceite da proposta do projeto pelo professor
+- **Última modificação:** 18/11/2026 — a chave do cache passou a levar a versão do JAR, no lugar da limpeza do cache a cada troca de plugin; cache stampede e "não atende" registrados nas consequências
+- **ADRs relacionadas:** Depende do ADR-001.
