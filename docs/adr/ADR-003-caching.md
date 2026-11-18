@@ -66,6 +66,13 @@ chaves.
   checkout. Se virar problema, dá para dar uma validade menor só ao `NAO_ATENDE` (o Spring Data Redis
   permite validade por entrada).
 - As entradas de uma versão antiga ocupam memória até expirar (no máximo 5 min).
+- **Cache stampede:** enquanto uma chave não está no cache, pedidos simultâneos para o mesmo envio
+  consultam a transportadora ao mesmo tempo, até a primeira resposta entrar. No teste de carga foram
+  60 consultas no primeiro segundo (20 usuários × 3 transportadoras) e nenhuma depois; com 10.000
+  pedidos simultâneos para a mesma chave fria, seriam até 10.000 consultas. O `@Cacheable(sync = true)`
+  não aceita a regra `unless` que impede guardar `INDISPONIVEL` e só sincroniza dentro de uma instância.
+  A saída seria juntar pedidos iguais em andamento (request coalescing) no `CotadorDeTransportadora`;
+  não implementamos.
 - Recompilar um plugin sem mudar a regra gera outro JAR e, portanto, outra versão: aquela
   transportadora perde o cache uma vez. É o lado seguro do erro.
 - Os objetos guardados precisam ser serializáveis, o que vira uma exigência do contrato

@@ -301,10 +301,20 @@ mvn test
 - `MonitorDeTrafegoTest` — contagem por segundo e classificação por origem (plugin, cache, falha).
 - `CarregadorDePluginsTest` — a versão do plugin (que entra na chave do cache) depende só do conteúdo do JAR.
 
+Os testes rodam também no GitHub Actions a cada push (`.github/workflows/build.yml`).
+
 ---
+
+## Limitações conhecidas
+
+As bordas da arquitetura estão em [`docs/LIMITACOES.md`](docs/LIMITACOES.md): isolamento só lógico,
+tempo limite que vale para a resposta e não para a execução, confiança na pasta de plugins, cache
+stampede, Metaspace sem monitoramento e o painel, que é didático e não substitui observabilidade
+(Micrometer, Prometheus e OpenTelemetry seriam o caminho).
 
 ## Documentação
 
 - `docs/adr/` — os três ADRs (microkernel, circuit breaking, caching)
+- `docs/LIMITACOES.md` — limitações conhecidas, com o que existe hoje e o próximo passo
 - `docs/c4/` — modelo C4 (contexto, containers, componentes e a sequência de uma cotação) em PlantUML, com as imagens já geradas
 - `carga/cotacoes.js` — teste de carga do k6 usado na demonstração

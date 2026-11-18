@@ -1,6 +1,6 @@
 # ADR-002 — Circuit breaker por transportadora
 
-**Status:** Aceito · **Data:** 02/11/2026
+**Status:** Aceito · **Data:** 02/11/2026 · **Revisado em:** 18/11/2026 (o tempo limite é da resposta; plugins em threads de plataforma)
 
 ## Contexto
 
@@ -19,7 +19,9 @@ Toda consulta a uma transportadora passa por um único componente, o `ExecutorIs
 - um **circuit breaker por transportadora** (Resilience4j), nomeado pelo id dela. Com 3 chamadas
   avaliadas e 50% de falhas, o circuito **abre** e o núcleo deixa de consultar aquela transportadora
   por 20 s; depois passa a **meio-aberto** e testa uma chamada antes de fechar de novo;
-- um **tempo limite** de 2 s por consulta, executada em outra thread: estourar o tempo conta como falha;
+- um **tempo limite de resposta** de 2 s por consulta, executada em outra thread: estourar o tempo
+  conta como falha. O código do plugin roda em **threads de plataforma**, e não virtuais (ver
+  Consequências);
 - um **fallback**: a transportadora com falha aparece na comparação como `INDISPONIVEL`, e as demais
   são exibidas normalmente, em vez de a comparação inteira falhar.
 
@@ -38,8 +40,17 @@ Ao carregar uma nova versão do plugin, o circuito daquela transportadora é zer
 - Mais um mecanismo para configurar: limites mal calibrados abrem o circuito cedo ou tarde demais.
 - Enquanto o circuito está aberto, a transportadora fica fora da comparação mesmo que já tenha voltado
   (até o teste do estado meio-aberto).
-- O tempo limite interrompe a thread, mas não garante que um plugin mal escrito pare de consumir CPU.
-  Isolamento total exigiria rodar plugins em processo separado, fora do escopo deste projeto.
+- **O tempo limite é da resposta, não da execução.** Quem chama recebe a resposta em até 2 s, mas o
+  `cancel(true)` só interrompe a thread, e o Java não tem como parar à força um código que não verifica
+  a interrupção. Um plugin preso em cálculo (um laço sem fim) continua rodando e ocupando CPU. O circuit
+  breaker limita o acúmulo: até 3 threads presas antes de o circuito abrir e mais 1 a cada teste do
+  meio-aberto (20 s). Remover o plugin não para essas threads. Parar de verdade exigiria rodar cada
+  plugin em outro processo, fora do escopo deste projeto.
+- Por isso o código dos plugins roda em threads de plataforma. Uma thread virtual presa em cálculo não
+  devolve a thread do sistema em que está montada; com poucas presas, nenhuma outra thread virtual do
+  núcleo roda, nem as do comparador. Reproduzimos isso: numa máquina com 2 núcleos de CPU, 2 plugins
+  presos impediram qualquer outra thread virtual de rodar; com threads de plataforma, a cotação seguinte
+  respondeu em dezenas de milissegundos. O custo é uma thread do sistema por consulta em andamento.
 
 ## Conformidade
 

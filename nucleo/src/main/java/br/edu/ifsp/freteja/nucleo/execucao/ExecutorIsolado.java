@@ -24,7 +24,8 @@ public class ExecutorIsolado implements OuvinteDePlugins, AutoCloseable {
 
     private final CircuitBreakerRegistry circuitos;
     private final Duration tempoLimite;
-    private final ExecutorService threads = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService threads = Executors.newCachedThreadPool(
+            Thread.ofPlatform().daemon().name("plugin-", 0).factory());
 
     public ExecutorIsolado(CircuitBreakerRegistry circuitos, Duration tempoLimite) {
         this.circuitos = circuitos;

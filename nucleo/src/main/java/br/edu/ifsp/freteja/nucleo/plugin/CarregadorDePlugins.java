@@ -97,6 +97,10 @@ public class CarregadorDePlugins implements AutoCloseable {
         } catch (Exception | LinkageError e) {
             LOG.log(Level.ERROR, "Falha ao carregar " + jar.getFileName() + ": " + e.getMessage(), e);
         } finally {
+            if (ids.isEmpty()) {
+                fechar(loader);
+                loader = null;
+            }
             jars.put(jar, new JarCarregado(modificadoEm, loader, List.copyOf(ids)));
         }
     }
