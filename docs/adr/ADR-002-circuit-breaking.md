@@ -51,4 +51,4 @@ Ao carregar uma nova versão do plugin, o circuito daquela transportadora é zer
 
 ## Notas
 
-Depende do ADR-001. Autores: Bruno G. A. Silva, Sabrina, Felipe.
+Depende do ADR-001. Autores: Filipe.
