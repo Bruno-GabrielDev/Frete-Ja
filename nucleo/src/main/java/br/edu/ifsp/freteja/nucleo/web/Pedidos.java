@@ -46,6 +46,6 @@ public final class Pedidos {
                                        List<ItemDaComparacao> cotacoes, long tempoMs) {
     }
 
-    public record TransportadoraAtiva(String id, String nome, String arquivo, Instant carregadoEm, String circuito) {
+    public record TransportadoraAtiva(String id, String nome, String arquivo, String versao, Instant carregadoEm, String circuito) {
     }
 }

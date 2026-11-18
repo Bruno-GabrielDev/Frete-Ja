@@ -33,6 +33,8 @@ Adotar **microkernel com descoberta dinâmica de plugins**:
 - o núcleo verifica uma pasta a cada 3 s e, para cada JAR, cria um `URLClassLoader` próprio e
   descobre as implementações via `ServiceLoader`. JAR novo é carregado, JAR substituído é recarregado,
   JAR apagado é removido — sem reiniciar o núcleo;
+- cada plugin carregado ganha uma **versão**, o começo do SHA-256 do JAR, que o cache usa na chave
+  (ADR-003);
 - o núcleo consulta todas as transportadoras **em paralelo** (uma thread virtual por transportadora),
   então a comparação demora o tempo da mais lenta, não a soma.
 

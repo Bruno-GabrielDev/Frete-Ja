@@ -12,8 +12,8 @@ System_Ext(apis, "APIs das transportadoras", "Correios, Jadlog, Loggi, Expressa.
 System_Boundary(freteja, "FreteJá") {
     Container(painel, "Painel web", "Container: HTML e JavaScript", "Mostra as transportadoras carregadas, a comparação e o estado dos circuitos")
     Container(nucleo, "Núcleo", "Container: Java 21, Spring Boot", "Fluxo comum de comparação; descobre, protege e executa os plugins")
-    Container(pasta, "Pasta de plugins", "Container: sistema de arquivos", "Um JAR por transportadora, verificada pelo núcleo a cada 3 s")
-    ContainerDb(redis, "Cache", "Container: Redis 7", "Cotações por transportadora + envio, com validade de 5 min")
+    ContainerDb(pasta, "Pasta de plugins", "Container: sistema de arquivos (volume)", "Guarda um JAR por transportadora; o núcleo verifica a pasta a cada 3 s")
+    ContainerDb(redis, "Cache", "Container: Redis 7", "Cotações com chave transportadora + versão do JAR + envio, validade de 5 min")
 }
 
 Rel(loja, painel, "Usa", "HTTPS")

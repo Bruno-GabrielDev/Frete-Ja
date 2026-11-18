@@ -27,6 +27,7 @@
   th { text-align: left; color: var(--suave); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--linha); }
   td { padding: 9px 8px; border-bottom: 1px solid #eef0f1; vertical-align: top; }
   code { font: 12px ui-monospace, Consolas, monospace; color: var(--suave); }
+  .versao { font-size: 12px; color: var(--suave); }
   .selo { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .CLOSED, .COTADA { background: var(--verde-claro); color: var(--verde); }
   .OPEN, .INDISPONIVEL { background: var(--vermelho-claro); color: var(--vermelho); }
@@ -166,7 +167,7 @@ async function atualizarTransportadoras() {
         const chave = t.id + "|" + t.arquivo + "|" + t.carregadoEm;
         const nova = conhecidas.size && !conhecidas.has(chave) ? "novo" : "";
         return `<tr class="${nova}"><td><strong>${escapar(t.nome)}</strong><br><code>${escapar(t.id)}</code></td>
-                <td><code>${escapar(t.arquivo)}</code></td>
+                <td><code>${escapar(t.arquivo)}</code><br><span class="versao">versão ${escapar(t.versao)}</span></td>
                 <td>${new Date(t.carregadoEm).toLocaleTimeString("pt-BR")}</td>
                 <td>${selo(t.circuito, rotuloCircuito[t.circuito] || t.circuito)}</td></tr>`;
       }).join("");

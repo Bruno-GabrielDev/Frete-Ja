@@ -48,7 +48,7 @@ class ComparadorDeFreteTest {
     }
 
     private void instalar(Transportadora transportadora) {
-        registro.registrar(new PluginCarregado(transportadora, transportadora.id() + ".jar", Instant.now()));
+        registro.registrar(new PluginCarregado(transportadora, transportadora.id() + ".jar", "teste", Instant.now()));
     }
 
     @Test

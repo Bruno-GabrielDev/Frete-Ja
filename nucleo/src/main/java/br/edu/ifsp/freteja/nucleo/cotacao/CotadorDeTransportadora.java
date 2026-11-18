@@ -18,7 +18,7 @@ public class CotadorDeTransportadora {
     }
 
     @Cacheable(cacheNames = "cotacoes",
-            key = "#plugin.id() + ':' + #envio.chave()",
+            key = "#plugin.id() + ':' + #plugin.versao() + ':' + #envio.chave()",
             unless = "#result.indisponivel()")
     public CotacaoDeFrete cotar(PluginCarregado plugin, Envio envio) {
         try {

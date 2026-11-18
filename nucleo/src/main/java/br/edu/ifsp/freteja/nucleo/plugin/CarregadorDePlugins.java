@@ -9,10 +9,13 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceConfigurationError;
@@ -74,15 +77,16 @@ public class CarregadorDePlugins implements AutoCloseable {
         URLClassLoader loader = null;
         List<String> ids = new ArrayList<>();
         try {
+            String versao = versaoDe(jar);
             loader = new URLClassLoader("plugin:" + jar.getFileName(), new URL[]{jar.toUri().toURL()}, pai);
             for (Transportadora transportadora : ServiceLoader.load(Transportadora.class, loader)) {
                 if (transportadora.getClass().getClassLoader() != loader) {
                     continue;
                 }
                 String id = transportadora.id();
-                registro.registrar(new PluginCarregado(transportadora, jar.getFileName().toString(), Instant.now()));
+                registro.registrar(new PluginCarregado(transportadora, jar.getFileName().toString(), versao, Instant.now()));
                 ids.add(id);
-                LOG.log(Level.INFO, "Plugin carregado: {0} ({1}) de {2}", id, transportadora.nome(), jar.getFileName());
+                LOG.log(Level.INFO, "Plugin carregado: {0} ({1}) de {2}, versão {3}", id, transportadora.nome(), jar.getFileName(), versao);
                 ouvintes.forEach(o -> o.pluginCarregado(id));
             }
             if (ids.isEmpty()) {
@@ -123,6 +127,15 @@ public class CarregadorDePlugins implements AutoCloseable {
         } catch (IOException e) {
             LOG.log(Level.ERROR, "Não foi possível ler a pasta de plugins " + diretorio, e);
             return Set.copyOf(jars.keySet());
+        }
+    }
+
+    static String versaoDe(Path jar) throws IOException {
+        try {
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(sha256.digest(Files.readAllBytes(jar))).substring(0, 12);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 sempre existe na JVM", e);
         }
     }
 

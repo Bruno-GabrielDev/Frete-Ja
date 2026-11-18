@@ -4,7 +4,7 @@ import br.edu.ifsp.freteja.api.Transportadora;
 
 import java.time.Instant;
 
-public record PluginCarregado(Transportadora transportadora, String arquivo, Instant carregadoEm) {
+public record PluginCarregado(Transportadora transportadora, String arquivo, String versao, Instant carregadoEm) {
 
     public String id() {
         return transportadora.id();

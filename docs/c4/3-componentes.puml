@@ -4,8 +4,8 @@
 title FreteJá — Diagrama de Componentes do Núcleo (C4 nível 3)
 
 Container(painel, "Painel web", "Container: HTML e JavaScript", "Comparação e estado dos circuitos")
-ContainerDb(redis, "Cache", "Container: Redis 7", "Cotações por transportadora + envio")
-Container(pasta, "Pasta de plugins", "Container: sistema de arquivos", "Um JAR por transportadora")
+ContainerDb(redis, "Cache", "Container: Redis 7", "Cotações por transportadora + versão do JAR + envio")
+ContainerDb(pasta, "Pasta de plugins", "Container: sistema de arquivos (volume)", "Um JAR por transportadora")
 
 Container_Boundary(nucleo, "Núcleo") {
     Component(api, "FreteController", "Component: Spring MVC Rest Controller", "API REST: transportadoras, cotações e circuitos")
@@ -13,8 +13,7 @@ Container_Boundary(nucleo, "Núcleo") {
     Component(cotador, "CotadorDeTransportadora", "Component: Spring Bean + @Cacheable", "Cotação de uma transportadora, com cache")
     Component(executor, "ExecutorIsolado", "Component: Java + Resilience4j", "Único ponto que chama plugin: circuit breaker + tempo limite")
     Component(registro, "RegistroDePlugins", "Component: Java", "Transportadoras disponíveis = plugins carregados")
-    Component(carregador, "CarregadorDePlugins", "Component: Java", "Carrega, troca e remove JARs em execução")
-    Component(invalidador, "InvalidadorDeCache", "Component: Java", "Limpa o cache quando um plugin muda")
+    Component(carregador, "CarregadorDePlugins", "Component: Java", "Carrega, troca e remove JARs em execução; calcula a versão de cada JAR")
     Component(contrato, "Transportadora", "Component: interface Java (plugin-api)", "Contrato implementado pelos plugins")
 }
 
@@ -29,7 +28,7 @@ Rel(painel, api, "Chama", "JSON/HTTPS")
 Rel(api, comparador, "comparar(envio)")
 Rel(comparador, registro, "Lista as transportadoras")
 Rel(comparador, cotador, "Uma consulta por transportadora")
-Rel(cotador, redis, "Cache por transportadora + envio", "RESP")
+Rel(cotador, redis, "Chave: id + versão do JAR + envio", "RESP")
 Rel(cotador, executor, "Delega a chamada")
 Rel(executor, contrato, "Invoca cotar(envio)")
 Rel(correios, contrato, "Implementa")
@@ -39,8 +38,6 @@ Rel(expressa, contrato, "Implementa")
 Rel(carregador, pasta, "Lê JARs")
 Rel(carregador, registro, "Registra e remove plugins")
 Rel(carregador, executor, "Avisa: zera o circuito")
-Rel(carregador, invalidador, "Avisa: limpa o cache")
-Rel(invalidador, redis, "clear")
 
 SHOW_LEGEND()
 @enduml

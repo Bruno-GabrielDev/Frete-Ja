@@ -39,7 +39,7 @@ public class FreteController {
     @GetMapping("/transportadoras")
     public List<TransportadoraAtiva> transportadoras() {
         return registro.listar().stream()
-                .map(p -> new TransportadoraAtiva(p.id(), p.nome(), p.arquivo(), p.carregadoEm(), executor.estadoDe(p.id())))
+                .map(p -> new TransportadoraAtiva(p.id(), p.nome(), p.arquivo(), p.versao(), p.carregadoEm(), executor.estadoDe(p.id())))
                 .toList();
     }
 

@@ -35,7 +35,7 @@ reg --> cmp : transportadoras carregadas
 
 loop para cada transportadora, em paralelo (uma thread virtual cada)
   cmp -> cot : cotar(plugin, envio)
-  cot -> redis : buscar "id:envio"
+  cot -> redis : buscar "id:versão do JAR:envio"
   alt está no cache
     redis --> cot : cotação guardada
     note right of cot : origem CACHE\nplugin nem é chamado
@@ -53,7 +53,7 @@ loop para cada transportadora, em paralelo (uma thread virtual cada)
         note right of cb : conta sucesso
         cb --> exe : CotacaoDeFrete
         exe --> cot : CotacaoDeFrete
-        cot -> redis : guardar "id:envio" (5 min)
+        cot -> redis : guardar "id:versão do JAR:envio" (5 min)
       else exceção ou mais de 2 s
         note right of cb : conta falha\n(50% em 3 chamadas abre o circuito)
         cb --> exe : FalhaDePluginException

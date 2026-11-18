@@ -40,8 +40,7 @@ freteja/
 │   │   └── ExecutorIsolado       ÚNICO ponto que chama plugin: circuit breaker + tempo limite
 │   ├── cotacao/
 │   │   ├── ComparadorDeFrete     consulta todas em paralelo e ordena
-│   │   ├── CotadorDeTransportadora  cotação de uma transportadora + @Cacheable
-│   │   └── InvalidadorDeCache    limpa o cache quando um plugin muda
+│   │   └── CotadorDeTransportadora  cotação de uma transportadora + @Cacheable (chave com a versão do JAR)
 │   ├── config/               montagem (Spring) e verificação periódica da pasta
 │   └── web/                  API REST + painel em /index.html
 │
@@ -57,7 +56,7 @@ freteja/
 1. O painel (ou a loja) envia `POST /api/cotacoes` com o envio.
 2. O `ComparadorDeFrete` pega no `RegistroDePlugins` as transportadoras carregadas e dispara **uma
    thread virtual por transportadora**: a resposta demora o tempo da mais lenta, não a soma.
-3. Para cada uma, o `CotadorDeTransportadora` procura no cache (`id + envio`). Se não houver, chama
+3. Para cada uma, o `CotadorDeTransportadora` procura no cache (`id + versão do JAR + envio`). Se não houver, chama
    o `ExecutorIsolado`, que passa pelo **circuit breaker** daquela transportadora e executa `cotar()`
    com **tempo limite de 2 s**.
 4. Falha, demora ou circuito aberto viram `INDISPONIVEL` só para aquela transportadora; as outras
@@ -68,7 +67,12 @@ freteja/
 **Como um plugin é descoberto:** o núcleo verifica `plugins-ativos/` a cada 3 s. Para cada JAR novo,
 cria um `URLClassLoader` só para ele e usa `ServiceLoader` para achar as classes que implementam
 `Transportadora` (declaradas em `META-INF/services/`). JAR apagado → plugin removido. JAR substituído →
-versão nova carregada, circuito zerado e cache limpo. Nada disso exige reiniciar.
+versão nova carregada e circuito zerado. Nada disso exige reiniciar.
+
+**Como o cache acompanha os plugins:** cada JAR carregado ganha uma versão, o começo do SHA-256 do
+seu conteúdo, e ela entra na chave do cache. Trocar o JAR de uma transportadora gera chaves novas só
+para ela; as outras continuam saindo do cache, e as entradas antigas expiram sozinhas em 5 min. Como a
+versão depende só do conteúdo, reiniciar o núcleo ou subir outra réplica encontra as mesmas chaves.
 
 **Restrições do estilo, verificadas no build** (`ArquiteturaTest`, ArchUnit):
 1. o núcleo nunca depende de uma transportadora concreta;
@@ -124,8 +128,9 @@ Correios R$ 26,05 (menor preço) e Jadlog R$ 27,05, origem `PLUGIN`, ~600 ms.
 ```bash
 ./scripts/instalar.sh loggi
 ```
-Em poucos segundos *Loggi* aparece na lista (linha destacada). Compare de novo → Loggi R$ 19,80 vira
-o **menor preço**. Nenhum restart. Troque o destino para o Rio (`20040-020`) → Loggi responde
+Em poucos segundos *Loggi* aparece na lista (linha destacada), com a versão do JAR. Compare de novo →
+Loggi R$ 19,80 vira o **menor preço**, com origem `PLUGIN`, enquanto Correios e Jadlog continuam com
+origem `CACHE`: só a transportadora nova foi consultada. Nenhum restart. Troque o destino para o Rio (`20040-020`) → Loggi responde
 **NÃO ATENDE** (só entrega dentro do estado) e Jadlog passa a ser a mais barata.
 
 **4. Circuit breaker.** Volte o destino para `01310-100` e instale a transportadora com defeito:
@@ -294,6 +299,7 @@ mvn test
   circuito abre e para de consultar, as outras continuam cotando, recarregar o plugin zera o circuito.
 - `EnvioTest` — CEP, distância, peso cúbico e chave de cache.
 - `MonitorDeTrafegoTest` — contagem por segundo e classificação por origem (plugin, cache, falha).
+- `CarregadorDePluginsTest` — a versão do plugin (que entra na chave do cache) depende só do conteúdo do JAR.
 
 ---
 
