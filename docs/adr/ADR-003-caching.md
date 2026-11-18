@@ -49,4 +49,4 @@ ser compartilhado caso o núcleo seja replicado.
 
 ## Notas
 
-Autores: Bruno G. A. Silva, Sabrina, Felipe.
+Autor: Bruno .
